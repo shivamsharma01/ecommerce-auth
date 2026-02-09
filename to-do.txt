@@ -1,0 +1,70 @@
+Actuator config for K8s probes
+
+How to disable Swagger in prod
+
+GCP-native metrics with OpenTelemetry
+
+Security hardening checklist for auth services
+
+===========================
+
+How it works on GKE (real setup)
+1️⃣ Your Pod has two containers
+Pod
+├── auth-service (Spring Boot)
+└── cloud-sql-proxy
+
+2️⃣ Cloud SQL Proxy container
+
+Example sidecar config:
+
+- name: cloud-sql-proxy
+  image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+  args:
+    - "--structured-logs"
+    - "--port=5432"
+    - "my-project:asia-south1:auth-db"
+  securityContext:
+    runAsNonRoot: true
+
+What about credentials?
+Option A (recommended): Workload Identity
+
+GKE Service Account ↔ Google Service Account
+
+Proxy uses IAM, no JSON keys
+
+Clean, secure, production-grade
+
+Pod SA → GCP SA → Cloud SQL
+
+
+===========================
+Best option: Brevo (formerly Sendinblue)
+
+300 emails/day free
+
+SMTP + REST
+
+No credit card
+
+Reliable
+
+👉 https://www.brevo.com
+
+==============================
+
+Explain how social login plugs into it
+
+Design JWT claims strategy
+
+Show Anthos + JWT trust model
+
+==============================
+
+docker run -d \
+  --name auth-redis \
+  -p 6379:6379 \
+  -v redis-data:/data \
+  redis:7 \
+  redis-server --appendonly yes --requirepass myStrongRedisPassword
