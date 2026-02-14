@@ -8,7 +8,7 @@ import com.mcart.auth.entity.OutboxEventEntity;
 import com.mcart.auth.entity.OutboxEventId;
 import com.mcart.auth.exception.UnauthorizedException;
 import com.mcart.auth.model.AuthProviderType;
-import com.mcart.auth.model.EmailStatus;
+import com.mcart.auth.model.OutboxStatus;
 import com.mcart.auth.repository.AuthIdentityRepository;
 import com.mcart.auth.repository.EmailVerificationRepository;
 import com.mcart.auth.repository.OutBoxEventRepository;
@@ -56,16 +56,18 @@ public class EmailVerificationService {
                 )
         );
 
+        Instant now = Instant.now(clock);
         outBoxEventRepository.save(
                 OutboxEventEntity.builder()
                         .id(new OutboxEventId(UUID.randomUUID(), authIdentityId))
                         .aggregateType(EMAIL_VERIFICATION)
                         .eventType(SEND_VERIFICATION_EMAIL)
                         .userId(userId)
-                        .retryCount(1)
+                        .retryCount(0)
                         .payload(payload)
-                        .status(EmailStatus.PENDING)
-                        .createdAt(Instant.now(clock))
+                        .status(OutboxStatus.PENDING)
+                        .createdAt(now)
+                        .lastAttemptAt(now)
                         .build()
         );
     }
