@@ -1,5 +1,5 @@
 package com.mcart.auth.model;
 
-public enum EmailStatus {
+public enum OutboxStatus {
     PENDING, SENT, FAILED
 }

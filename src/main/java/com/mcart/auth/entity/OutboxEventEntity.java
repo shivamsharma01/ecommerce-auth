@@ -1,6 +1,6 @@
 package com.mcart.auth.entity;
 
-import com.mcart.auth.model.EmailStatus;
+import com.mcart.auth.model.OutboxStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -37,7 +37,7 @@ public class OutboxEventEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EmailStatus status;
+    private OutboxStatus status;
 
     @Column(name = "retry_count")
     private Integer retryCount;
@@ -49,7 +49,7 @@ public class OutboxEventEntity {
     private Instant lastAttemptAt;
 
     public void markSent() {
-        this.status = EmailStatus.SENT;
+        this.status = OutboxStatus.SENT;
         this.lastAttemptAt = Instant.now();
     }
 

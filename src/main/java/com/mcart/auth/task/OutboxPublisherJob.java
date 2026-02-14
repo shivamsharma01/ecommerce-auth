@@ -2,7 +2,7 @@ package com.mcart.auth.task;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mcart.auth.entity.OutboxEventEntity;
-import com.mcart.auth.model.EmailStatus;
+import com.mcart.auth.model.OutboxStatus;
 import com.mcart.auth.repository.OutBoxEventRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,8 @@ import java.util.Map;
 @Slf4j
 public class OutboxPublisherJob {
 
-    private static final String TOPIC = "email-events";
+    private static final String EMAIL_TOPIC = "email-events";
+    private static final String USER_SIGNUP_TOPIC = "user-signup-events";
 
     private final OutBoxEventRepository outBoxEventRepository;
    // private final PubSubTemplate pubSubTemplate;
@@ -30,13 +31,14 @@ public class OutboxPublisherJob {
     public void publishOutboxEvents() {
 
         List<OutboxEventEntity> events =
-                outBoxEventRepository.findTop20ByStatusOrderByCreatedAtAsc(EmailStatus.PENDING);
+                outBoxEventRepository.findTop20ByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING);
 
         for (OutboxEventEntity event : events) {
             try {
                 String message = buildMessage(event);
+                String topic = resolveTopic(event);
 
-                //pubSubTemplate.publish(TOPIC, message);
+                //pubSubTemplate.publish(EMAIL_TOPIC, message);
 
                 event.markSent();
             } catch (Exception ex) {
@@ -46,21 +48,34 @@ public class OutboxPublisherJob {
         }
     }
 
+
+    private String resolveTopic(OutboxEventEntity event) {
+        return switch (event.getAggregateType()) {
+            case "EMAIL_VERIFICATION" -> EMAIL_TOPIC;
+            case "USER_SIGNUP" -> USER_SIGNUP_TOPIC;
+            default -> throw new IllegalStateException(
+                    "Unknown aggregateType: " + event.getAggregateType()
+            );
+        };
+    }
+
     private String buildMessage(OutboxEventEntity event) throws Exception {
 
         Map<String, Object> payload = objectMapper.readValue(
                 event.getPayload(), Map.class
         );
 
-        Map<String, Object> message = Map.of(
-                "eventType", event.getEventType(),
-                "email", payload.get("email"),
-                "token", payload.get("token"),
-                "authIdentityId", event.getId().getAggregateId(),
-                "createdAt", event.getCreatedAt().toString()
+        return objectMapper.writeValueAsString(
+                Map.of(
+                        "eventType", event.getEventType(),
+                        "aggregateType", event.getAggregateType(),
+                        "userId", event.getUserId(),
+                        "authIdentityId", event.getId().getAggregateId(),
+                        "payload", payload,
+                        "occurredAt", event.getCreatedAt().toString(),
+                        "version", 1
+                )
         );
-
-        return objectMapper.writeValueAsString(message);
     }
 
 }

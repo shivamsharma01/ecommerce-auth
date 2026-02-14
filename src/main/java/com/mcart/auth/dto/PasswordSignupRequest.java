@@ -14,4 +14,10 @@ public class PasswordSignupRequest {
 
     @NotBlank
     private String password;
+
+    @NotBlank
+    private String firstName;
+
+    @NotBlank
+    private String lastName;
 }
