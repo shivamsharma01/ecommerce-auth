@@ -21,6 +21,9 @@ public class JwtTokenProvider {
     @Value("${security.jwt.access-token-ttl-seconds}")
     private long accessTtl;
 
+    @Value("${auth.issuer-uri}")
+    private String issuerUri;
+
     private JwtEncoder jwtEncoder;
 
     public String generateAccessToken(UUID authIdentityId, UUID userId) {
@@ -28,7 +31,7 @@ public class JwtTokenProvider {
         Instant now = Instant.now();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("https://auth.mycompany.com")
+                .issuer(issuerUri)
                 .subject(authIdentityId.toString())
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(accessTtl))

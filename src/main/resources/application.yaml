@@ -1,3 +1,8 @@
+auth:
+  issuer-uri: ${AUTH_ISSUER_URI:https://auth.mycompany.com}
+  pubsub:
+    user-signup-topic: ${USER_SIGNUP_TOPIC:user-signup-events}
+
 security:
   jwt:
     issuer: ecommerce-auth
@@ -28,6 +33,8 @@ spring:
     password: ${DB_PASSWORD:auth_password}
     hikari:
       maximum-pool-size: 10
+
+  jpa:
     hibernate:
       ddl-auto: none
 
@@ -37,8 +44,3 @@ spring:
       port: 6379
       password: myStrongRedisPassword
       timeout: 2s
-
-# Pub/Sub topic for user events (signup + email verified) - consumed by user service
-auth:
-  pubsub:
-    user-signup-topic: ${USER_SIGNUP_TOPIC:user-signup-events}

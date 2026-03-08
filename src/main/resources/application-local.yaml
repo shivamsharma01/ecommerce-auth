@@ -1,0 +1,3 @@
+# Local development - auth service runs at localhost:8081
+auth:
+  issuer-uri: http://localhost:8087

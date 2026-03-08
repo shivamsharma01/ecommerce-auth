@@ -33,6 +33,9 @@ public class TokenServiceImpl implements TokenService {
     @Value("${security.jwt.refresh-token-ttl-seconds}")
     private long refreshTtlSeconds;
 
+    @Value("${auth.issuer-uri}")
+    private String issuerUri;
+
     private final Clock clock = Clock.systemUTC();
 
     private String generateAccessToken(UUID authIdentityId, UUID userId) {
@@ -40,7 +43,7 @@ public class TokenServiceImpl implements TokenService {
         Instant now = Instant.now();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("https://auth.mycompany.com")
+                .issuer(issuerUri)
                 .subject(authIdentityId.toString())
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(900))

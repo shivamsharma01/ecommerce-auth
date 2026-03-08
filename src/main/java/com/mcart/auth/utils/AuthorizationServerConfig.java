@@ -1,5 +1,6 @@
 package com.mcart.auth.utils;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -49,8 +50,10 @@ public class AuthorizationServerConfig {
 
         http
                 .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-                .with(authorizationServerConfigurer, Customizer.withDefaults())
-                .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+                .with(authorizationServerConfigurer, configurer -> configurer.oidc(Customizer.withDefaults()))
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/.well-known/openid-configuration", "/oauth2/jwks").permitAll()
+                        .anyRequest().authenticated())
                 .exceptionHandling(exceptions ->
                         exceptions.authenticationEntryPoint(
                                 new LoginUrlAuthenticationEntryPoint("/login")
@@ -75,7 +78,9 @@ public class AuthorizationServerConfig {
                                 "/auth/verify-email",
                                 "/auth/resend-verification",
                                 "/auth/refresh",
-                                "/login"
+                                "/login",
+                                "/.well-known/openid-configuration",
+                                "/oauth2/jwks"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -92,9 +97,11 @@ public class AuthorizationServerConfig {
     }
 
     @Bean
-    public AuthorizationServerSettings authorizationServerSettings() {
+    public AuthorizationServerSettings authorizationServerSettings(
+            @Value("${auth.issuer-uri}") String issuerUri
+    ) {
         return AuthorizationServerSettings.builder()
-                .issuer("https://auth.mycompany.com")
+                .issuer(issuerUri)
                 .build();
     }
 }
