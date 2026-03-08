@@ -18,7 +18,6 @@ public class EmailVerificationController {
     public ResponseEntity<String> verifyEmail(
             @RequestParam("token") String token
     ) {
-        System.out.println("yolo: "+token);
         emailVerificationService.verifyEmail(token);
         return ResponseEntity.ok("Email verified successfully");
     }

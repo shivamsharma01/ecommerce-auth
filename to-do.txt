@@ -38,20 +38,6 @@ Clean, secure, production-grade
 
 Pod SA → GCP SA → Cloud SQL
 
-
-===========================
-Best option: Brevo (formerly Sendinblue)
-
-300 emails/day free
-
-SMTP + REST
-
-No credit card
-
-Reliable
-
-👉 https://www.brevo.com
-
 ==============================
 
 Explain how social login plugs into it
@@ -59,17 +45,3 @@ Explain how social login plugs into it
 Design JWT claims strategy
 
 Show Anthos + JWT trust model
-
-==============================
-
-docker run -d \
-  --name auth-redis \
-  -p 6379:6379 \
-  -v redis-data:/data \
-  redis:7 \
-  redis-server --appendonly yes --requirepass myStrongRedisPassword
-
-==============================
-
-docker exec -it auth-postgres sh
-psql -U auth_username -d auth

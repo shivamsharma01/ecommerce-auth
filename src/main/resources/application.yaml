@@ -18,7 +18,7 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/auth
-    username: ${DB_USERNAME:auth_username}
+    username: ${DB_USERNAME:auth_user}
     password: ${DB_PASSWORD:auth_password}
     hikari:
       maximum-pool-size: 10
