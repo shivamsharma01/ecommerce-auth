@@ -11,6 +11,13 @@ spring:
       project-id: ${GCP_PROJECT_ID:dev-project}
       credentials:
         location: ${GCP_CREDENTIALS_PATH:}
+      pubsub:
+        enabled: ${GCP_PUBSUB_ENABLED:false}
+
+# Pub/Sub topic for user signup events (consumed by user service)
+auth:
+  pubsub:
+    user-signup-topic: ${USER_SIGNUP_TOPIC:user-signup-events}
   flyway:
     enabled: true
     baseline-on-migrate: true
