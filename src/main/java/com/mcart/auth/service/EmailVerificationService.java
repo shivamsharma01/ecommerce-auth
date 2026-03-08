@@ -32,6 +32,7 @@ public class EmailVerificationService {
     private final ObjectMapper objectMapper;
     private final AuthIdentityRepository authIdentityRepo;
     private final OutBoxEventRepository outBoxEventRepository;
+    private final OutboxEventService outboxEventService;
     private final EmailVerificationRepository emailVerificationRepo;
     private final Clock clock = Clock.systemUTC();
 
@@ -101,6 +102,13 @@ public class EmailVerificationService {
         identity.setEmailVerified(true);
         identity.setEmailVerifiedAt(Instant.now(clock));
         authIdentityRepo.save(identity);
+
+        // publish EMAIL_VERIFIED for user service (sets verified=true so /me and /profile work)
+        try {
+            outboxEventService.publishEmailVerifiedEvent(identity.getAuthIdentityId(), identity.getUserId());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to publish email verified event", e);
+        }
 
         // delete token (single-use)
         emailVerificationRepo.delete(verification);

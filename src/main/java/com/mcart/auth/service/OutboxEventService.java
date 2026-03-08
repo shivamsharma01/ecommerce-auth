@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -31,6 +32,9 @@ public class OutboxEventService {
 
     /** Event type when signup is complete (password or social). */
     public static final String USER_SIGNUP_COMPLETED = "USER_SIGNUP_COMPLETED";
+
+    /** Event type when user completes /verify-email (password signup only). */
+    public static final String EMAIL_VERIFIED = "EMAIL_VERIFIED";
 
     private final OutBoxEventRepository outBoxEventRepository;
     private final ObjectMapper objectMapper;
@@ -73,6 +77,31 @@ public class OutboxEventService {
                         .id(new OutboxEventId(UUID.randomUUID(), authIdentityId))
                         .aggregateType(USER_SIGNUP)
                         .eventType(USER_SIGNUP_COMPLETED)
+                        .userId(userId)
+                        .retryCount(0)
+                        .payload(payloadJson)
+                        .status(OutboxStatus.PENDING)
+                        .createdAt(now)
+                        .lastAttemptAt(now)
+                        .build()
+        );
+    }
+
+    /**
+     * Persists an EMAIL_VERIFIED event after successful /verify-email.
+     * User service uses this to set verified=true so /me and /profile return profile details.
+     *
+     * @param authIdentityId the auth identity ID
+     * @param userId         the user ID
+     */
+    public void publishEmailVerifiedEvent(UUID authIdentityId, UUID userId) throws JsonProcessingException {
+        String payloadJson = objectMapper.writeValueAsString(Map.of("userId", userId.toString()));
+        Instant now = Instant.now(clock);
+        outBoxEventRepository.save(
+                OutboxEventEntity.builder()
+                        .id(new OutboxEventId(UUID.randomUUID(), authIdentityId))
+                        .aggregateType(USER_SIGNUP)
+                        .eventType(EMAIL_VERIFIED)
                         .userId(userId)
                         .retryCount(0)
                         .payload(payloadJson)

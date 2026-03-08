@@ -6,18 +6,17 @@ security:
     secret: ${JWT_SECRET:default-secret-key}
 
 spring:
+  application:
+    name: auth
+
   cloud:
     gcp:
-      project-id: ${GCP_PROJECT_ID:dev-project}
+      project-id: ${GCP_PROJECT_ID:my-project-chat-ai-487408}
       credentials:
-        location: ${GCP_CREDENTIALS_PATH:}
+        location: ${GCP_CREDENTIALS_PATH:file:/home/shivam-sharma/.gcp/my-project-chat-ai-487408-5604b2cd4107.json}
       pubsub:
-        enabled: ${GCP_PUBSUB_ENABLED:false}
+        enabled: ${GCP_PUBSUB_ENABLED:true}
 
-# Pub/Sub topic for user signup events (consumed by user service)
-auth:
-  pubsub:
-    user-signup-topic: ${USER_SIGNUP_TOPIC:user-signup-events}
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -38,3 +37,8 @@ auth:
       port: 6379
       password: myStrongRedisPassword
       timeout: 2s
+
+# Pub/Sub topic for user events (signup + email verified) - consumed by user service
+auth:
+  pubsub:
+    user-signup-topic: ${USER_SIGNUP_TOPIC:user-signup-events}

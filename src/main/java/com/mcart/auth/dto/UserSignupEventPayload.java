@@ -8,6 +8,7 @@ import java.util.UUID;
 /**
  * Payload for USER_SIGNUP / USER_SIGNUP_COMPLETED outbox events.
  * Consumed by downstream services (e.g. User Service) to create user profiles.
+ * Password signup: verified=false until user completes /verify-email.
  */
 @Getter
 @Builder
@@ -18,4 +19,6 @@ public class UserSignupEventPayload {
     private String firstName;
     private String lastName;
     private String providerType;
+    /** false for password signup; user service sets verified=true only after EMAIL_VERIFIED event */
+    private Boolean verified;
 }

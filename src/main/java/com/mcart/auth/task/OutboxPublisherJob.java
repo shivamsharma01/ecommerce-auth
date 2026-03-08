@@ -7,6 +7,7 @@ import com.google.cloud.spring.pubsub.core.PubSubTemplate;
 import com.mcart.auth.entity.OutboxEventEntity;
 import com.mcart.auth.model.OutboxStatus;
 import com.mcart.auth.repository.OutBoxEventRepository;
+import com.mcart.auth.service.OutboxEventService;
 import com.mcart.auth.service.VerificationEmailService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -78,7 +79,8 @@ public class OutboxPublisherJob {
     }
 
     /**
-     * Publishes USER_SIGNUP event to Pub/Sub for downstream services (e.g. User Service).
+     * Publishes USER_SIGNUP events to Pub/Sub for downstream services (e.g. User Service).
+     * Handles USER_SIGNUP_COMPLETED (profile data) and EMAIL_VERIFIED (verified=true).
      *
      * @return true if published, false if skipped (Pub/Sub not configured)
      */
@@ -88,31 +90,41 @@ public class OutboxPublisherJob {
             return false;
         }
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> payloadMap = objectMapper.readValue(event.getPayload(), Map.class);
-        String email = getString(payloadMap, "email");
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("User signup payload must contain email");
+        Map<String, Object> message;
+        if (OutboxEventService.EMAIL_VERIFIED.equals(event.getEventType())) {
+            message = Map.of(
+                    "eventType", event.getEventType(),
+                    "aggregateType", event.getAggregateType(),
+                    "userId", event.getUserId().toString(),
+                    "authIdentityId", event.getId().getAggregateId().toString(),
+                    "payload", objectMapper.readValue(event.getPayload(), Map.class),
+                    "occurredAt", event.getCreatedAt().toString(),
+                    "version", EVENT_VERSION
+            );
+        } else {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> payloadMap = objectMapper.readValue(event.getPayload(), Map.class);
+            String email = getString(payloadMap, "email");
+            if (email == null || email.isBlank()) {
+                throw new IllegalArgumentException("User signup payload must contain email");
+            }
+            Map<String, Object> normalizedPayload = new HashMap<>(payloadMap);
+            normalizedPayload.putIfAbsent("firstName", "");
+            normalizedPayload.putIfAbsent("lastName", "");
+            message = Map.of(
+                    "eventType", event.getEventType(),
+                    "aggregateType", event.getAggregateType(),
+                    "userId", event.getUserId().toString(),
+                    "authIdentityId", event.getId().getAggregateId().toString(),
+                    "payload", normalizedPayload,
+                    "occurredAt", event.getCreatedAt().toString(),
+                    "version", EVENT_VERSION
+            );
         }
-
-        // Ensure firstName/lastName for user service (social signup may not have them)
-        Map<String, Object> normalizedPayload = new HashMap<>(payloadMap);
-        normalizedPayload.putIfAbsent("firstName", "");
-        normalizedPayload.putIfAbsent("lastName", "");
-
-        Map<String, Object> message = Map.of(
-                "eventType", event.getEventType(),
-                "aggregateType", event.getAggregateType(),
-                "userId", event.getUserId().toString(),
-                "authIdentityId", event.getId().getAggregateId().toString(),
-                "payload", normalizedPayload,
-                "occurredAt", event.getCreatedAt().toString(),
-                "version", EVENT_VERSION
-        );
 
         String messageJson = objectMapper.writeValueAsString(message);
         pubSubTemplate.publish(userSignupTopic, messageJson);
-        log.info("Published USER_SIGNUP event for userId={} to topic {}", event.getUserId(), userSignupTopic);
+        log.info("Published {} event for userId={} to topic {}", event.getEventType(), event.getUserId(), userSignupTopic);
         return true;
     }
 

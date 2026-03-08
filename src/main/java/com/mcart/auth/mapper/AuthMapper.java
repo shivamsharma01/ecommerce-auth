@@ -26,16 +26,20 @@ public interface AuthMapper {
 
     /**
      * Maps PasswordSignupRequest to UserSignupEventPayload for outbox events.
+     * verified=false until user completes /verify-email.
      */
     @Mapping(target = "userId", source = "userId")
     @Mapping(target = "providerType", constant = "PASSWORD")
+    @Mapping(target = "verified", constant = "false")
     UserSignupEventPayload toUserSignupPayload(PasswordSignupRequest request, UUID userId);
 
     /**
      * Maps SocialLoginRequest to SocialSignupEventPayload for outbox events.
+     * verified=true (OAuth providers verify email).
      */
     @Mapping(target = "userId", source = "userId")
     @Mapping(target = "providerType", source = "request.providerType", qualifiedByName = "providerTypeToString")
+    @Mapping(target = "verified", constant = "true")
     SocialSignupEventPayload toSocialSignupPayload(SocialLoginRequest request, UUID userId);
 
     @Named("providerTypeToString")
