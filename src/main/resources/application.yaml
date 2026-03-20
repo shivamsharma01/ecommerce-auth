@@ -1,8 +1,3 @@
-auth:
-  issuer-uri: ${AUTH_ISSUER_URI:https://auth.mycompany.com}
-  pubsub:
-    user-signup-topic: ${USER_SIGNUP_TOPIC:user-signup-events}
-
 security:
   jwt:
     issuer: ecommerce-auth
@@ -11,17 +6,11 @@ security:
     secret: ${JWT_SECRET:default-secret-key}
 
 spring:
-  application:
-    name: auth
-
   cloud:
     gcp:
-      project-id: ${GCP_PROJECT_ID:my-project-chat-ai-487408}
+      project-id: ${GCP_PROJECT_ID:dev-project}
       credentials:
-        location: ${GCP_CREDENTIALS_PATH:file:/home/shivam-sharma/.gcp/my-project-chat-ai-487408-5604b2cd4107.json}
-      pubsub:
-        enabled: ${GCP_PUBSUB_ENABLED:true}
-
+        location: ${GCP_CREDENTIALS_PATH:}
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -29,12 +18,10 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/auth
-    username: ${DB_USERNAME:auth_user}
+    username: ${DB_USERNAME:auth_username}
     password: ${DB_PASSWORD:auth_password}
     hikari:
       maximum-pool-size: 10
-
-  jpa:
     hibernate:
       ddl-auto: none
 
