@@ -1,6 +1,5 @@
 # Build output
 build/
-!gradle/wrapper/gradle-wrapper.jar
 
 # IDE
 .idea/
@@ -10,13 +9,12 @@ build/
 *.swo
 
 # Git
-.git/
+.git
 .gitignore
 
 # Docs and misc
 *.md
 k8s/
 
-# Test and local
-.gradle/
-!gradle/wrapper/
+# Gradle cache (re-download in container)
+.gradle
