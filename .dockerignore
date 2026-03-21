@@ -1,0 +1,22 @@
+# Build output
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docs and misc
+*.md
+k8s/
+
+# Test and local
+.gradle/
+!gradle/wrapper/
