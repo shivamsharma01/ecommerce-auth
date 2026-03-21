@@ -1,3 +1,25 @@
-# Local development - auth service runs at localhost:8081
+# Local development defaults - auth service runs at localhost:8081
 auth:
   issuer-uri: http://localhost:8081
+  cookie:
+    secure: false
+  verification:
+    base-url: http://localhost:8081
+  oauth2:
+    client-secret: ${OAUTH2_CLIENT_SECRET:local-dev-secret}
+    redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:8080/login/oauth2/code/client-app}
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:local-dev-secret-change-in-production}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auth
+    username: ${DB_USERNAME:auth_user}
+    password: ${DB_PASSWORD:auth_password}
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD:}

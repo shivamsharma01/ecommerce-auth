@@ -1,5 +1,6 @@
 package com.mcart.auth.service;
 
+import com.mcart.auth.config.ConfigConstants;
 import com.mcart.auth.model.RefreshTokenData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -15,7 +16,7 @@ import java.util.UUID;
 public class RedisRefreshTokenStore implements RefreshTokenStore {
 
     private final StringRedisTemplate redisTemplate;
-    private static final String PREFIX = "refresh:";
+    private static final String PREFIX = ConfigConstants.RedisKeys.REFRESH_TOKEN;
 
     @Override
     public void store(String tokenId, RefreshTokenData data, Duration ttl) {
@@ -29,7 +30,14 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
     @Override
     public Optional<RefreshTokenData> get(String tokenId) {
         String value = redisTemplate.opsForValue().get(PREFIX + tokenId);
-        return value == null ? Optional.empty() : Optional.of(deserialize(value));
+        if (value == null) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(deserialize(value));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -42,11 +50,21 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
     }
 
     private RefreshTokenData deserialize(String raw) {
-        String[] parts = raw.split("\\|");
-        return new RefreshTokenData(
-                UUID.fromString(parts[0]),
-                UUID.fromString(parts[1]),
-                Instant.parse(parts[2])
-        );
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalArgumentException("Invalid refresh token data");
+        }
+        String[] parts = raw.split("\\|", -1);
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Invalid refresh token format");
+        }
+        try {
+            return new RefreshTokenData(
+                    UUID.fromString(parts[0]),
+                    UUID.fromString(parts[1]),
+                    Instant.parse(parts[2])
+            );
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid refresh token data", e);
+        }
     }
 }

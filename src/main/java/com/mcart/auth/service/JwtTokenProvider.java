@@ -1,5 +1,6 @@
 package com.mcart.auth.service;
 
+import com.mcart.auth.config.ConfigConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -14,9 +15,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    private static final String USER_ID = "userId";
-    private static final String TYPE = "type";
-    private static final String ACCESS = "ACCESS";
 
     @Value("${security.jwt.access-token-ttl-seconds}")
     private long accessTtl;
@@ -35,8 +33,8 @@ public class JwtTokenProvider {
                 .subject(authIdentityId.toString())
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(accessTtl))
-                .claim(USER_ID, userId.toString())
-                .claim(TYPE, ACCESS)
+                .claim(ConfigConstants.JwtClaims.USER_ID, userId.toString())
+                .claim(ConfigConstants.JwtClaims.TYPE, ConfigConstants.JwtClaims.TYPE_ACCESS)
                 .id(UUID.randomUUID().toString())
                 .build();
 

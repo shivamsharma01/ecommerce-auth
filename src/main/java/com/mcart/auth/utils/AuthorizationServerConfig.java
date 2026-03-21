@@ -22,18 +22,30 @@ import java.util.UUID;
 @Configuration
 public class AuthorizationServerConfig {
 
+    @Value("${auth.oauth2.client-id:client-app}")
+    private String clientId;
+
+    @Value("${auth.oauth2.client-secret:}")
+    private String clientSecret;
+
+    @Value("${auth.oauth2.redirect-uri:}")
+    private String redirectUri;
 
     @Bean
     public RegisteredClientRepository registeredClientRepository(
             PasswordEncoder passwordEncoder
     ) {
+        if (clientSecret == null || clientSecret.isBlank() || redirectUri == null || redirectUri.isBlank()) {
+            throw new IllegalStateException(
+                    "OAuth2 client must be configured. Set OAUTH2_CLIENT_SECRET and OAUTH2_REDIRECT_URI from K8s ConfigMap/Secrets. For local dev, use --spring.profiles.active=local");
+        }
         RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("client-app")
-                .clientSecret(passwordEncoder.encode("secret"))
+                .clientId(clientId)
+                .clientSecret(passwordEncoder.encode(clientSecret))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("http://localhost:8080/login/oauth2/code/client-app")
+                .redirectUri(redirectUri)
                 .scope("openid")
                 .scope("profile")
                 .build();

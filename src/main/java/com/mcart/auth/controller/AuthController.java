@@ -1,5 +1,6 @@
 package com.mcart.auth.controller;
 
+import com.mcart.auth.config.ConfigConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.mcart.auth.dto.*;
 import com.mcart.auth.model.TokenResult;
@@ -62,7 +63,7 @@ public class AuthController {
     // -----------------------------
     @PostMapping("/refresh")
     public LoginResponse refresh(
-            @CookieValue(name = "refresh_token", required = false)
+            @CookieValue(name = ConfigConstants.Cookie.REFRESH_TOKEN_NAME, required = false)
             String refreshToken,
             HttpServletResponse response
     ) {

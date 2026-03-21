@@ -1,5 +1,6 @@
 package com.mcart.auth.service;
 
+import com.mcart.auth.config.ConfigConstants;
 import com.mcart.auth.entity.AuthUserEntity;
 import com.mcart.auth.exception.UnauthorizedException;
 import com.mcart.auth.model.AuthUserStatus;
@@ -30,11 +31,17 @@ public class TokenServiceImpl implements TokenService {
     private final RefreshTokenStore refreshTokenStore;
     private final AuthUserRepository authUserRepo;
 
+    @Value("${security.jwt.access-token-ttl-seconds}")
+    private long accessTtlSeconds;
+
     @Value("${security.jwt.refresh-token-ttl-seconds}")
     private long refreshTtlSeconds;
 
     @Value("${auth.issuer-uri}")
     private String issuerUri;
+
+    @Value("${auth.cookie.secure:true}")
+    private boolean cookieSecure;
 
     private final Clock clock = Clock.systemUTC();
 
@@ -46,9 +53,9 @@ public class TokenServiceImpl implements TokenService {
                 .issuer(issuerUri)
                 .subject(authIdentityId.toString())
                 .issuedAt(now)
-                .expiresAt(now.plusSeconds(900))
-                .claim("userId", userId.toString())
-                .claim("type", "ACCESS")
+                .expiresAt(now.plusSeconds(accessTtlSeconds))
+                .claim(ConfigConstants.JwtClaims.USER_ID, userId.toString())
+                .claim(ConfigConstants.JwtClaims.TYPE, ConfigConstants.JwtClaims.TYPE_ACCESS)
                 .id(UUID.randomUUID().toString())
                 .build();
 
@@ -75,11 +82,11 @@ public class TokenServiceImpl implements TokenService {
         );
 
         // 3️⃣ Set refresh token as HttpOnly cookie
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshTokenId)
+        ResponseCookie refreshCookie = ResponseCookie.from(ConfigConstants.Cookie.REFRESH_TOKEN_NAME, refreshTokenId)
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)
                 .sameSite("Strict")
-                .path("/auth/refresh")
+                .path(ConfigConstants.Cookie.REFRESH_PATH)
                 .maxAge(refreshTtlSeconds)
                 .build();
 
@@ -87,7 +94,7 @@ public class TokenServiceImpl implements TokenService {
 
         return new TokenResult(
                 accessToken,
-                refreshTtlSeconds
+                accessTtlSeconds
         );
     }
 

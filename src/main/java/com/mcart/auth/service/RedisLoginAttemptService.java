@@ -1,5 +1,6 @@
 package com.mcart.auth.service;
 
+import com.mcart.auth.config.ConfigConstants;
 import com.mcart.auth.entity.AuthIdentityEntity;
 import com.mcart.auth.model.LoginAttemptProperties;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class RedisLoginAttemptService implements LoginAttemptService {
 
-    private static final String KEY_PREFIX = "auth:login:fail:";
+    private static final String KEY_PREFIX = ConfigConstants.RedisKeys.LOGIN_FAILURE;
 
     private final StringRedisTemplate redisTemplate;
     private final LoginAttemptProperties props;

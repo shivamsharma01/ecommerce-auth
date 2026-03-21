@@ -1,5 +1,7 @@
 package com.mcart.auth.service;
 
+import com.mcart.auth.config.ConfigConstants;
+import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -16,14 +18,21 @@ public class VerificationEmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${auth.verification.base-url:http://localhost:8081}")
+    @Value("${auth.verification.base-url}")
     private String baseUrl;
 
     @Value("${spring.mail.username:noreply@localhost}")
     private String fromEmail;
 
-    private static final String SUBJECT = "Verify your email";
-    private static final String VERIFY_PATH = "/auth/verify-email";
+    private static final String VERIFY_PATH = ConfigConstants.AuthPaths.VERIFY_EMAIL;
+
+    @PostConstruct
+    public void validateConfig() {
+        if (baseUrl == null || baseUrl.isBlank()) {
+            throw new IllegalStateException(
+                    "auth.verification.base-url must be set for verification emails. Set AUTH_VERIFICATION_BASE_URL.");
+        }
+    }
 
     /**
      * Sends a verification email with a link to confirm the user's email address.
@@ -40,7 +49,7 @@ public class VerificationEmailService {
 
         helper.setFrom(fromEmail);
         helper.setTo(to);
-        helper.setSubject(SUBJECT);
+        helper.setSubject(ConfigConstants.Email.VERIFICATION_SUBJECT);
         helper.setText(buildEmailBody(verificationLink), true);
 
         mailSender.send(message);
