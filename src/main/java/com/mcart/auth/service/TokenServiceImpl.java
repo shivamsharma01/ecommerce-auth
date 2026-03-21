@@ -13,9 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
@@ -27,42 +24,18 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TokenServiceImpl implements TokenService {
 
-    private final JwtEncoder jwtEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
     private final AuthUserRepository authUserRepo;
 
-    @Value("${security.jwt.access-token-ttl-seconds}")
-    private long accessTtlSeconds;
-
     @Value("${security.jwt.refresh-token-ttl-seconds}")
     private long refreshTtlSeconds;
-
-    @Value("${auth.issuer-uri}")
-    private String issuerUri;
 
     @Value("${auth.cookie.secure:true}")
     private boolean cookieSecure;
 
     private final Clock clock = Clock.systemUTC();
 
-    private String generateAccessToken(UUID authIdentityId, UUID userId) {
-
-        Instant now = Instant.now();
-
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(issuerUri)
-                .subject(authIdentityId.toString())
-                .issuedAt(now)
-                .expiresAt(now.plusSeconds(accessTtlSeconds))
-                .claim(ConfigConstants.JwtClaims.USER_ID, userId.toString())
-                .claim(ConfigConstants.JwtClaims.TYPE, ConfigConstants.JwtClaims.TYPE_ACCESS)
-                .id(UUID.randomUUID().toString())
-                .build();
-
-        return jwtEncoder.encode(
-                JwtEncoderParameters.from(claims)
-        ).getTokenValue();
-    }
     public TokenResult issueTokens(
             UUID authIdentityId,
             UUID userId,
@@ -70,7 +43,7 @@ public class TokenServiceImpl implements TokenService {
     ) {
 
         // 1️⃣ Access token (JWT)
-        String accessToken = generateAccessToken(authIdentityId, userId);
+        String accessToken = jwtTokenProvider.generateAccessToken(authIdentityId, userId);
 
         // 2️⃣ Refresh token (opaque)
         String refreshTokenId = UUID.randomUUID().toString();
@@ -94,7 +67,7 @@ public class TokenServiceImpl implements TokenService {
 
         return new TokenResult(
                 accessToken,
-                accessTtlSeconds
+                jwtTokenProvider.getAccessTokenTtl()
         );
     }
 

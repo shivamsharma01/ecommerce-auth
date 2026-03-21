@@ -31,7 +31,7 @@ All configuration is externalized via environment variables. In Kubernetes, inje
 |----------|-------------|---------|
 | `JWT_SECRET` | Secret for JWT signing (use strong random value) | — |
 | `DB_URL` | PostgreSQL JDBC URL | `jdbc:postgresql://localhost:5432/auth` |
-| `DB_USERNAME` | Database username | `auth_username` |
+| `DB_USERNAME` | Database username | `auth_user` |
 | `DB_PASSWORD` | Database password | — |
 | `REDIS_HOST` | Redis host | `localhost` |
 | `REDIS_PORT` | Redis port | `6379` |

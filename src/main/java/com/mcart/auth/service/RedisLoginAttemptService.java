@@ -4,6 +4,7 @@ import com.mcart.auth.config.ConfigConstants;
 import com.mcart.auth.entity.AuthIdentityEntity;
 import com.mcart.auth.model.LoginAttemptProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RedisLoginAttemptService implements LoginAttemptService {
 
     private static final String KEY_PREFIX = ConfigConstants.RedisKeys.LOGIN_FAILURE;
@@ -54,8 +56,13 @@ public class RedisLoginAttemptService implements LoginAttemptService {
             return false;
         }
 
-        int attempts = Integer.parseInt(value);
-        return attempts >= props.getMaxAttempts();
+        try {
+            int attempts = Integer.parseInt(value);
+            return attempts >= props.getMaxAttempts();
+        } catch (NumberFormatException e) {
+            log.warn("Invalid login attempt count for key {}: {}", key, value);
+            return false;
+        }
     }
 
     @Override

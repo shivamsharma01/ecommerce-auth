@@ -22,7 +22,7 @@ public class JwtTokenProvider {
     @Value("${auth.issuer-uri}")
     private String issuerUri;
 
-    private JwtEncoder jwtEncoder;
+    private final JwtEncoder jwtEncoder;
 
     public String generateAccessToken(UUID authIdentityId, UUID userId) {
 
