@@ -92,7 +92,8 @@ public class AuthorizationServerConfig {
                                 "/auth/refresh",
                                 "/login",
                                 "/.well-known/openid-configuration",
-                                "/oauth2/jwks"
+                                "/oauth2/jwks",
+                                "/actuator/health/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

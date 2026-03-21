@@ -64,6 +64,17 @@ auth:
 server:
   port: ${SERVER_PORT:8081}
 
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
 security:
   jwt:
     issuer: ecommerce-auth
