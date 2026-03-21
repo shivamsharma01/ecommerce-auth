@@ -14,6 +14,7 @@ import com.mcart.auth.repository.EmailVerificationRepository;
 import com.mcart.auth.repository.OutBoxEventRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
@@ -28,6 +29,10 @@ public class EmailVerificationService {
 
     public static final String EMAIL_VERIFICATION = "EMAIL_VERIFICATION";
     public static final String SEND_VERIFICATION_EMAIL = "SEND_VERIFICATION_EMAIL";
+
+    @Value("${auth.verification.token-ttl-hours:24}")
+    private int tokenTtlHours;
+
     private final EmailVerificationRateLimiter emailVerificationRateLimiter;
     private final ObjectMapper objectMapper;
     private final AuthIdentityRepository authIdentityRepo;
@@ -42,7 +47,7 @@ public class EmailVerificationService {
                 .authIdentityId(authIdentityId)
                 .email(email)
                 .token(UUID.randomUUID().toString())
-                .expiresAt(Instant.now(clock).plus(24, ChronoUnit.HOURS))
+                .expiresAt(Instant.now(clock).plus(tokenTtlHours, ChronoUnit.HOURS))
                 .build();
 
         // 🔁 Rate limit hook (Redis)

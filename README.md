@@ -61,6 +61,9 @@ All configuration is externalized via environment variables. In Kubernetes, inje
 | `LOGIN_MAX_ATTEMPTS` | Failed attempts before lockout | `5` |
 | `LOGIN_LOCK_DURATION_MINUTES` | Lockout duration | `15` |
 | `EMAIL_VERIFICATION_RATE_LIMIT` | Max verification emails per hour per user | `3` |
+| `EMAIL_VERIFICATION_TTL_HOURS` | Verification link expiry (hours) | `24` |
+| `AUTH_PUBSUB_USER_SIGNUP_TOPIC` | Pub/Sub topic for user signup events | `user-signup-events` |
+| `AUTH_COOKIE_SECURE` | Set `false` for local HTTP (cookie over non-HTTPS) | `true` |
 
 ## API Endpoints
 
