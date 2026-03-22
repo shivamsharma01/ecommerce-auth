@@ -35,4 +35,9 @@ public class AuthUserEntity {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    /** When true, access token includes scope {@code product.admin} for product / product-indexer admin APIs. */
+    @Column(name = "platform_admin", nullable = false)
+    @Builder.Default
+    private boolean platformAdmin = false;
 }

@@ -24,22 +24,25 @@ public class JwtTokenProvider {
 
     private final JwtEncoder jwtEncoder;
 
-    public String generateAccessToken(UUID authIdentityId, UUID userId) {
+    public String generateAccessToken(UUID authIdentityId, UUID userId, boolean platformAdmin) {
 
         Instant now = Instant.now();
 
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder claims = JwtClaimsSet.builder()
                 .issuer(issuerUri)
                 .subject(authIdentityId.toString())
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(accessTtl))
                 .claim(ConfigConstants.JwtClaims.USER_ID, userId.toString())
                 .claim(ConfigConstants.JwtClaims.TYPE, ConfigConstants.JwtClaims.TYPE_ACCESS)
-                .id(UUID.randomUUID().toString())
-                .build();
+                .id(UUID.randomUUID().toString());
+
+        if (platformAdmin) {
+            claims.claim("scope", ConfigConstants.JwtClaims.SCOPE_PRODUCT_ADMIN);
+        }
 
         return jwtEncoder.encode(
-                JwtEncoderParameters.from(claims)
+                JwtEncoderParameters.from(claims.build())
         ).getTokenValue();
 
     }

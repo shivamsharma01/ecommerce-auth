@@ -42,8 +42,12 @@ public class TokenServiceImpl implements TokenService {
             HttpServletResponse response
     ) {
 
-        // 1️⃣ Access token (JWT)
-        String accessToken = jwtTokenProvider.generateAccessToken(authIdentityId, userId);
+        AuthUserEntity user = authUserRepo.findByUserId(userId)
+                .orElseThrow(() -> new UnauthorizedException("User not found for token issue"));
+
+        // 1️⃣ Access token (JWT) — platform admins get scope product.admin for downstream services
+        String accessToken = jwtTokenProvider.generateAccessToken(
+                authIdentityId, userId, user.isPlatformAdmin());
 
         // 2️⃣ Refresh token (opaque)
         String refreshTokenId = UUID.randomUUID().toString();

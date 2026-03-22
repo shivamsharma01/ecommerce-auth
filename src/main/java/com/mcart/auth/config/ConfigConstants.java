@@ -73,6 +73,9 @@ public final class ConfigConstants {
 
         /** Token type value for access tokens. */
         public static final String TYPE_ACCESS = "ACCESS";
+
+        /** OAuth2 scope added to JWT for platform admins (resource server → {@code SCOPE_product.admin}). */
+        public static final String SCOPE_PRODUCT_ADMIN = "product.admin";
     }
 
     /**

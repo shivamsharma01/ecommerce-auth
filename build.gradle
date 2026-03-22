@@ -32,8 +32,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	implementation 'org.springframework.boot:spring-boot-starter-flyway'
-	implementation 'org.flywaydb:flyway-database-postgresql'
 
 	implementation 'commons-logging:commons-logging:1.2'
 
@@ -61,11 +59,20 @@ dependencies {
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.register('generateBootstrapPasswordHash', JavaExec) {
+	group = 'help'
+	description = 'Print Argon2 hash for ecomm-infra Flyway bootstrap admin (pass -PbootstrapPassword=...)'
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'com.mcart.auth.BootstrapPasswordHashGenerator'
+	args = [project.findProperty('bootstrapPassword') ?: 'ChangeMeAfterFirstDeploy!']
 }
 
 bootJar {

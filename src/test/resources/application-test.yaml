@@ -1,0 +1,43 @@
+# Full context smoke test: no PostgreSQL, Redis, or GCP on your machine.
+auth:
+  issuer-uri: http://localhost:8081
+  verification:
+    base-url: http://localhost:8081
+  oauth2:
+    client-id: client-app
+    client-secret: test-oauth2-client-secret
+    redirect-uri: http://localhost:8081/login/oauth2/code/client-app
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:auth_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081
+  sql:
+    init:
+      mode: never
+  cloud:
+    gcp:
+      pubsub:
+        enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+
+management:
+  health:
+    redis:
+      enabled: false
