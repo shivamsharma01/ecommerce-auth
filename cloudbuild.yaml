@@ -6,6 +6,10 @@ substitutions:
   _CONFIG_REPO_BRANCH: main
   _CONFIG_FILE: deploy/k8s/apps/auth/deployment.yaml
   _GITHUB_TOKEN_SECRET: github-token
+  _RUN_CONFIG_REPO_TRIGGER: "false"
+  _CONFIG_TRIGGER_ID: ""
+  _CONFIG_TRIGGER_REGION: global
+  _CONFIG_TRIGGER_PROJECT_ID: ""
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -70,6 +74,35 @@ steps:
         git add "$_CONFIG_FILE"
         git commit -m "chore(auth): update image to $${VERSION}"
         git push origin "HEAD:${_CONFIG_REPO_BRANCH}"
+        touch /workspace/config_repo_updated
+
+  - id: trigger-config-repo-build
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        if [[ "${_RUN_CONFIG_REPO_TRIGGER}" != "true" ]]; then
+          echo "Skipping config-repo trigger (_RUN_CONFIG_REPO_TRIGGER!=true)."
+          exit 0
+        fi
+
+        if [[ ! -f /workspace/config_repo_updated ]]; then
+          echo "Config repo was not updated in this build; skipping trigger."
+          exit 0
+        fi
+
+        if [[ -z "${_CONFIG_TRIGGER_ID}" ]]; then
+          echo "_CONFIG_TRIGGER_ID is required when _RUN_CONFIG_REPO_TRIGGER=true"
+          exit 1
+        fi
+
+        TARGET_PROJECT="${_CONFIG_TRIGGER_PROJECT_ID:-$PROJECT_ID}"
+
+        gcloud builds triggers run "${_CONFIG_TRIGGER_ID}" \
+          --region="${_CONFIG_TRIGGER_REGION}" \
+          --project="${TARGET_PROJECT}" \
+          --branch="${_CONFIG_REPO_BRANCH}"
 
 availableSecrets:
   secretManager:
