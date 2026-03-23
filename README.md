@@ -60,4 +60,4 @@ Set `auth_user.platform_admin = true` in the database for any other account that
 
 ## Kubernetes
 
-Manifests live in **`ecomm-infra/deploy/k8s/apps/auth/`**. Apply via `cd ecomm-infra/deploy && make apps-apply` (or point Argo CD at that path). Production secrets: **GCP Secret Manager** + External Secrets Operator — see `ecomm-infra/docs/kubernetes-secrets-production.md`.
+Manifests live in **`ecomm-infra/deploy/k8s/apps/auth/`**. Apply via `cd ecomm-infra/deploy && make apps-apply` (or point Argo CD at that path). Production secrets: copy **`secret.example.yaml`** → **`secret.yaml`** (gitignored) — see `ecomm-infra/docs/kubernetes-secrets-production.md`.
