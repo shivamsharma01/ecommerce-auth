@@ -1,0 +1,77 @@
+substitutions:
+  _REGION: asia-south2
+  _REPO: docker-apps
+  _SERVICE_NAME: auth
+  _CONFIG_REPO_URL: github.com/shivamsharma01/ecommerce-infra.git
+  _CONFIG_REPO_BRANCH: main
+  _CONFIG_FILE: deploy/k8s/apps/auth/deployment.yaml
+  _GITHUB_TOKEN_SECRET: github-token
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  - id: docker-build
+    name: gcr.io/cloud-builders/docker
+    env:
+      - DOCKER_BUILDKIT=1
+    args:
+      - build
+      - '--progress=plain'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE_NAME:$COMMIT_SHA'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE_NAME:latest'
+      - .
+
+  - id: docker-push-sha
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE_NAME:$COMMIT_SHA'
+
+  - id: docker-push-latest
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE_NAME:latest'
+
+  - id: update-config-repo
+    name: gcr.io/cloud-builders/git
+    entrypoint: bash
+    secretEnv:
+      - GITHUB_TOKEN
+    args:
+      - -ceu
+      - |
+        : "$${GITHUB_TOKEN:?Set GitHub token via Secret Manager}"
+
+        RAW_SHA="$${COMMIT_SHA:-$${SHORT_SHA:-$${REVISION_ID:-$${BUILD_ID:-manual}}}}"
+        VERSION="$$(printf '%s' "$${RAW_SHA}" | cut -c1-7)"
+        IMAGE_URI="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE_NAME:$${VERSION}"
+
+        git clone "https://oauth2:$${GITHUB_TOKEN}@${_CONFIG_REPO_URL}" config-repo
+        cd config-repo
+        git checkout "$_CONFIG_REPO_BRANCH"
+
+        test -f "$_CONFIG_FILE"
+
+        sed -i -E \
+          "s|^([[:space:]]*image:[[:space:]]*).*$|\\1$${IMAGE_URI}|g" \
+          "$_CONFIG_FILE"
+
+        if git diff --quiet -- "$_CONFIG_FILE"; then
+          echo "No config changes detected in $_CONFIG_FILE; skipping commit."
+          exit 0
+        fi
+
+        git config user.name "cloud-build-bot"
+        git config user.email "cloud-build-bot@${PROJECT_ID}.iam.gserviceaccount.com"
+        git add "$_CONFIG_FILE"
+        git commit -m "chore(auth): update image to $${VERSION}"
+        git push origin "HEAD:${_CONFIG_REPO_BRANCH}"
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/${_GITHUB_TOKEN_SECRET}/versions/latest
+      env: GITHUB_TOKEN
