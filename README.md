@@ -7,7 +7,7 @@ Issues and validates JWTs, handles signup/login, email verification, OAuth2/OIDC
 - Java 17
 - PostgreSQL and Redis when running for real (not required for `./gradlew test`)
 
-**Database schema** is applied by **Flyway Jobs** in `ecomm-infra/deploy/helm/mcart-bootstrap` (SQL under `files/auth/`). The app does not run migrations on startup. For local PostgreSQL, run Flyway against that folder (see `ecomm-infra/docs/deployment-bootstrap.md` — local migrations).
+**Database schema** is applied by **Flyway Jobs** in `ecomm-infra/deploy/helm/mcart-bootstrap` (SQL under `files/auth/`). The app does not run migrations on startup. For local PostgreSQL, run Flyway against that folder (see **`ecomm-infra/README.md`** §2 — local migrations).
 
 ## Run locally
 
@@ -60,4 +60,4 @@ Set `auth_user.platform_admin = true` in the database for any other account that
 
 ## Kubernetes
 
-Manifests live in **`ecomm-infra/deploy/k8s/apps/auth/`**. Apply via `cd ecomm-infra/deploy && make apps-apply` (or point Argo CD at that path). Production secrets: copy **`secret.example.yaml`** → **`secret.yaml`** (gitignored) — see `ecomm-infra/docs/kubernetes-secrets-production.md`.
+Manifests live in **`ecomm-infra/deploy/k8s/apps/auth/`**. Apply via `cd ecomm-infra/deploy && make apps-apply` (or point Argo CD at that path). Production secrets: copy **`secret.example.yaml`** → **`secret.yaml`** (gitignored) — see **`ecomm-infra/README.md`** §3.
