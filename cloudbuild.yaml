@@ -46,7 +46,11 @@ steps:
       - |
         : "$${GITHUB_TOKEN:?Set GitHub token via Secret Manager}"
 
-        RAW_SHA="$${COMMIT_SHA:-$${SHORT_SHA:-$${REVISION_ID:-$${BUILD_ID:-manual}}}}"
+        RAW_SHA="$${COMMIT_SHA:-$${REVISION_ID:-$${SHORT_SHA:-}}}"
+        if [[ -z "$${RAW_SHA}" ]]; then
+          RAW_SHA="$$(git rev-parse HEAD 2>/dev/null || true)"
+        fi
+        : "$${RAW_SHA:?COMMIT_SHA/REVISION_ID missing and git rev-parse failed}"
         VERSION="$$(printf '%s' "$${RAW_SHA}" | cut -c1-7)"
         IMAGE_URI="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE_NAME:$${VERSION}"
 
