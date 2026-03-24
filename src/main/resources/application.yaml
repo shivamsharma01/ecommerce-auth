@@ -1,6 +1,10 @@
 spring:
   application:
     name: auth
+  profiles:
+    group:
+      dev:
+        - local
   cloud:
     gcp:
       project-id: ${GCP_PROJECT_ID:}
