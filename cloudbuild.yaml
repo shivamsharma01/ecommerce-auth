@@ -6,7 +6,7 @@ substitutions:
   _REGION: asia-south2
   _REPO: docker-apps
   _SERVICE_NAME: auth
-  # Host + path only (no scheme). Clone: https://oauth2:TOKEN@<this>
+  # Host + path only (no scheme). Clone: https://x-access-token:TOKEN@<this>
   _CONFIG_REPO_URL: github.com/shivamsharma01/ecommerce-infra.git
 
 options:
@@ -62,7 +62,7 @@ steps:
         # Same tag as docker-push-sha (full SHA)
         IMAGE_URI="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE_NAME:$${RAW_SHA}"
 
-        git clone "https://oauth2:$${GITHUB_TOKEN}@$_CONFIG_REPO_URL" config-repo
+        git clone "https://x-access-token:$${GITHUB_TOKEN}@$_CONFIG_REPO_URL" config-repo
         cd config-repo
 
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
