@@ -6,15 +6,17 @@ substitutions:
   _REGION: asia-south2
   _REPO: docker-apps
   _SERVICE_NAME: auth
-  # Host + path only (no scheme). Clone: https://x-access-token:TOKEN@<this>
   _CONFIG_REPO_URL: github.com/shivamsharma01/ecommerce-infra.git
+  _CONFIG_REPO_BRANCH: main
+  _CONFIG_FILE: deploy/k8s/apps/auth/deployment.yaml
+  _GITHUB_TOKEN_SECRET: github-token
 
 options:
   logging: CLOUD_LOGGING_ONLY
 
 availableSecrets:
   secretManager:
-    - versionName: projects/$PROJECT_ID/secrets/GITHUB_TOKEN/versions/latest
+    - versionName: projects/$PROJECT_ID/secrets/${_GITHUB_TOKEN_SECRET}/versions/latest
       env: GITHUB_TOKEN
 
 steps:
@@ -51,7 +53,7 @@ steps:
     args:
       - -ceu
       - |
-        : "$${GITHUB_TOKEN:?Create Secret Manager secret GITHUB_TOKEN (PAT: repo scope on ecommerce-infra)}"
+        : "$${GITHUB_TOKEN:?Set GitHub token via Secret Manager}"
 
         RAW_SHA="$${COMMIT_SHA:-$${REVISION_ID:-$${SHORT_SHA:-}}}"
         if [[ -z "$${RAW_SHA}" ]]; then
@@ -59,31 +61,32 @@ steps:
         fi
         : "$${RAW_SHA:?COMMIT_SHA/REVISION_ID missing and git rev-parse failed}"
 
-        # Same tag as docker-push-sha (full SHA)
+        VERSION="$$(printf '%s' "$${RAW_SHA}" | cut -c1-7)"
+        # Use full SHA tag to match docker-push-sha exactly.
         IMAGE_URI="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE_NAME:$${RAW_SHA}"
 
-        git clone "https://x-access-token:$${GITHUB_TOKEN}@$_CONFIG_REPO_URL" config-repo
+        git clone "https://x-access-token:$${GITHUB_TOKEN}@${_CONFIG_REPO_URL}" config-repo
         cd config-repo
+        git checkout "$_CONFIG_REPO_BRANCH"
 
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config user.name "Cloud Build"
+        test -f "$_CONFIG_FILE"
 
-        DEPLOY="deploy/k8s/apps/$_SERVICE_NAME/deployment.yaml"
-        [[ -f "$${DEPLOY}" ]] || { echo "missing $${DEPLOY}" >&2; exit 1; }
+        sed -i -E \
+          "s|^([[:space:]]*image:[[:space:]]*).*$|\\1$${IMAGE_URI}|g" \
+          "$_CONFIG_FILE"
 
-        sed -E "s|^([[:space:]]*image:[[:space:]]*).*docker-apps/$_SERVICE_NAME:[^[:space:]]+|\\1$${IMAGE_URI}|" "$${DEPLOY}" > "$${DEPLOY}.new"
-        mv "$${DEPLOY}.new" "$${DEPLOY}"
-
-        if git diff --quiet; then
-          echo "No deployment change; skip commit."
+        if git diff --quiet -- "$_CONFIG_FILE"; then
+          echo "No config changes detected in $_CONFIG_FILE; skipping commit."
           exit 0
         fi
 
-        git add "$${DEPLOY}"
-        git commit -m "deploy($_SERVICE_NAME): image $$(printf '%s' "$${RAW_SHA}" | cut -c1-7)"
+        git config user.name "cloud-build-bot"
+        git config user.email "cloud-build-bot@${PROJECT_ID}.iam.gserviceaccount.com"
+        git add "$_CONFIG_FILE"
+        git commit -m "chore(auth): update image to $${VERSION}"
 
         for i in $$(seq 1 12); do
-          git pull --rebase origin main && git push origin main && exit 0
+          git pull --rebase origin "$_CONFIG_REPO_BRANCH" && git push origin "HEAD:${_CONFIG_REPO_BRANCH}" && exit 0
           echo "git push retry $$i" >&2
           sleep $$((i * 3))
         done
