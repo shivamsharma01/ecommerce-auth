@@ -73,7 +73,6 @@ public class JwtConfig {
         );
     }
 
-
     @Bean
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
