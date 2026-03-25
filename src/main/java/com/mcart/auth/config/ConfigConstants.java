@@ -76,6 +76,9 @@ public final class ConfigConstants {
 
         /** OAuth2 scope added to JWT for platform admins (resource server → {@code SCOPE_product.admin}). */
         public static final String SCOPE_PRODUCT_ADMIN = "product.admin";
+
+        /** OAuth2 scope added to JWT for platform admins to allow triggering reindex jobs. */
+        public static final String SCOPE_REINDEX = "reindex";
     }
 
     /**

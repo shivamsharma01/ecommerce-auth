@@ -9,6 +9,8 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -38,7 +40,11 @@ public class JwtTokenProvider {
                 .id(UUID.randomUUID().toString());
 
         if (platformAdmin) {
-            claims.claim("scope", ConfigConstants.JwtClaims.SCOPE_PRODUCT_ADMIN);
+            // Space-delimited "scope" is the default format Spring Security turns into SCOPE_* authorities.
+            List<String> scopes = new ArrayList<>();
+            scopes.add(ConfigConstants.JwtClaims.SCOPE_PRODUCT_ADMIN);
+            scopes.add(ConfigConstants.JwtClaims.SCOPE_REINDEX);
+            claims.claim("scope", String.join(" ", scopes));
         }
 
         return jwtEncoder.encode(
