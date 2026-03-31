@@ -54,7 +54,8 @@ public class OutboxEventEntity {
     }
 
     public void markFailed() {
-        this.retryCount++;
+        this.retryCount = (this.retryCount == null ? 0 : this.retryCount) + 1;
+        this.status = OutboxStatus.FAILED;
         this.lastAttemptAt = Instant.now();
     }
 }
