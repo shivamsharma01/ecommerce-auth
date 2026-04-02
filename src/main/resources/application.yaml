@@ -64,6 +64,8 @@ auth:
     user-signup-topic: ${AUTH_PUBSUB_USER_SIGNUP_TOPIC:user-signup-events}
   verification:
     base-url: ${AUTH_VERIFICATION_BASE_URL:}
+    # Optional full URL after successful /auth/verify-email (default: base-url + /signup)
+    post-verify-redirect-url: ${AUTH_POST_VERIFY_REDIRECT_URL:}
     rate-limit-max: ${EMAIL_VERIFICATION_RATE_LIMIT:3}
     token-ttl-hours: ${EMAIL_VERIFICATION_TTL_HOURS:24}
   login-attempt:
