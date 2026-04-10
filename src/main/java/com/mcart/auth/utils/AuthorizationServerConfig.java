@@ -102,6 +102,7 @@ public class AuthorizationServerConfig {
                         .ignoringRequestMatchers(
                                 "/auth/login",
                                 "/auth/signup",
+                                "/auth/resend-verification",
                                 "/auth/refresh"
                         )
                 );
