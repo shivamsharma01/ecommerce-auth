@@ -3,6 +3,9 @@ auth:
   issuer-uri: http://localhost:8081
   cookie:
     secure: false
+  # After /auth/verify-email, redirect the browser to the Angular dev server (not /signup on :8081).
+  verification:
+    post-verify-redirect-url: http://localhost:4200/signup
   oauth2:
     client-secret: ${OAUTH2_CLIENT_SECRET:local-dev-secret}
     redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:8081/login/oauth2/code/client-app}
