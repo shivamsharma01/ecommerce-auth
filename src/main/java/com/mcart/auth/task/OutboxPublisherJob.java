@@ -8,7 +8,6 @@ import com.mcart.auth.entity.OutboxEventEntity;
 import com.mcart.auth.model.OutboxStatus;
 import com.mcart.auth.repository.OutBoxEventRepository;
 import com.mcart.auth.service.OutboxEventService;
-import com.mcart.auth.service.VerificationEmailService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +28,6 @@ public class OutboxPublisherJob {
     private static final int EVENT_VERSION = 1;
 
     private final OutBoxEventRepository outBoxEventRepository;
-    private final VerificationEmailService verificationEmailService;
     private final ObjectMapper objectMapper;
 
     @Autowired(required = false)
@@ -38,11 +36,11 @@ public class OutboxPublisherJob {
     @Value("${auth.pubsub.user-signup-topic:user-signup-events}")
     private String userSignupTopic;
 
-    public OutboxPublisherJob(OutBoxEventRepository outBoxEventRepository,
-                              VerificationEmailService verificationEmailService,
-                              ObjectMapper objectMapper) {
+    @Value("${auth.pubsub.email-verification-topic:email-verification-events}")
+    private String emailVerificationTopic;
+
+    public OutboxPublisherJob(OutBoxEventRepository outBoxEventRepository, ObjectMapper objectMapper) {
         this.outBoxEventRepository = outBoxEventRepository;
-        this.verificationEmailService = verificationEmailService;
         this.objectMapper = objectMapper.copy()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -52,15 +50,12 @@ public class OutboxPublisherJob {
     @Transactional
     public void publishOutboxEvents() {
         List<OutboxEventEntity> events =
-                outBoxEventRepository.findTop20ByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING);
+                outBoxEventRepository.findPendingForPublish(OutboxStatus.PENDING.name());
 
         for (OutboxEventEntity event : events) {
             try {
                 boolean processed = switch (event.getAggregateType()) {
-                    case EMAIL_VERIFICATION -> {
-                        processVerificationEmail(event);
-                        yield true;
-                    }
+                    case EMAIL_VERIFICATION -> publishVerificationEmailEvent(event);
                     case USER_SIGNUP -> processUserSignupEvent(event);
                     default -> throw new IllegalStateException(
                             "Unknown aggregateType: " + event.getAggregateType());
@@ -128,12 +123,16 @@ public class OutboxPublisherJob {
         return true;
     }
 
-    private static String getString(Map<String, Object> map, String key) {
-        Object v = map.get(key);
-        return v != null ? v.toString() : null;
-    }
-
-    private void processVerificationEmail(OutboxEventEntity event) throws Exception {
+    /**
+     * Publishes verification-email requests to Pub/Sub for the email microservice.
+     *
+     * @return true if published, false if skipped (Pub/Sub not configured)
+     */
+    private boolean publishVerificationEmailEvent(OutboxEventEntity event) throws Exception {
+        if (pubSubTemplate == null) {
+            log.debug("PubSubTemplate not available, skipping EMAIL_VERIFICATION event (stays PENDING)");
+            return false;
+        }
         @SuppressWarnings("unchecked")
         Map<String, Object> payload = objectMapper.readValue(event.getPayload(), Map.class);
         String email = payload.get("email") != null ? payload.get("email").toString() : null;
@@ -141,6 +140,25 @@ public class OutboxPublisherJob {
         if (email == null || token == null) {
             throw new IllegalArgumentException("Verification payload must contain email and token");
         }
-        verificationEmailService.sendVerificationEmail(email, token);
+
+        Map<String, Object> message = new HashMap<>();
+        message.put("eventType", event.getEventType());
+        message.put("aggregateType", event.getAggregateType());
+        message.put("userId", event.getUserId().toString());
+        message.put("authIdentityId", event.getId().getAggregateId().toString());
+        message.put("payload", payload);
+        message.put("occurredAt", event.getCreatedAt().toString());
+        message.put("version", EVENT_VERSION);
+        message.put("outboxEventId", event.getId().getId().toString());
+
+        String messageJson = objectMapper.writeValueAsString(message);
+        pubSubTemplate.publish(emailVerificationTopic, messageJson);
+        log.info("Published {} for userId={} to topic {}", event.getEventType(), event.getUserId(), emailVerificationTopic);
+        return true;
+    }
+
+    private static String getString(Map<String, Object> map, String key) {
+        Object v = map.get(key);
+        return v != null ? v.toString() : null;
     }
 }

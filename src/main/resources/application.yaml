@@ -26,22 +26,6 @@ spring:
       password: ${REDIS_PASSWORD:}
       timeout: 2s
 
-  mail:
-    test-connection: false
-    host: smtp.gmail.com
-    port: 587
-    username: ${SPRING_MAIL_USERNAME:}
-    password: ${SPRING_MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          ssl:
-            trust: smtp.gmail.com
-    debug: false
-
 server:
   port: ${SERVER_PORT:8081}
 
@@ -62,6 +46,7 @@ auth:
     secure: ${AUTH_COOKIE_SECURE:true}
   pubsub:
     user-signup-topic: ${AUTH_PUBSUB_USER_SIGNUP_TOPIC:user-signup-events}
+    email-verification-topic: ${AUTH_PUBSUB_EMAIL_VERIFICATION_TOPIC:email-verification-events}
   verification:
     base-url: ${AUTH_VERIFICATION_BASE_URL:}
     # Optional full URL after successful /auth/verify-email (default: base-url + /signup)
