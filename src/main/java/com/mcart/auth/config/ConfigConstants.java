@@ -42,6 +42,9 @@ public final class ConfigConstants {
 
         /** Prefix for email verification rate limit counters. Key: {@code email_verification:{authIdentityId}} */
         public static final String EMAIL_VERIFICATION = "email_verification:";
+
+        /** Prefix for resend-verification rate limits (separate bucket from initial signup send). */
+        public static final String EMAIL_VERIFICATION_RESEND = "email_verification_resend:";
     }
 
     /**

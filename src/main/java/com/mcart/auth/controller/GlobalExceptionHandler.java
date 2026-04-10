@@ -1,6 +1,7 @@
 package com.mcart.auth.controller;
 
 import com.mcart.auth.exception.ConflictException;
+import com.mcart.auth.exception.TooManyRequestsException;
 import com.mcart.auth.exception.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleConflict(ConflictException ex) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<?> handleTooManyRequests(TooManyRequestsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(ex.getMessage());
     }
 }

@@ -19,20 +19,27 @@ public class EmailVerificationRateLimiter {
     @Value("${auth.verification.rate-limit-max:3}")
     private int maxPerHour;
 
+    @Value("${auth.verification.resend-rate-limit-max:10}")
+    private int resendMaxPerHour;
+
     public void assertAllowed(UUID authIdentityId) {
+        incrementAndAssert(ConfigConstants.RedisKeys.EMAIL_VERIFICATION + authIdentityId, maxPerHour,
+                "Too many verification emails requested");
+    }
 
-        String key = ConfigConstants.RedisKeys.EMAIL_VERIFICATION + authIdentityId;
+    public void assertAllowedResend(UUID authIdentityId) {
+        incrementAndAssert(ConfigConstants.RedisKeys.EMAIL_VERIFICATION_RESEND + authIdentityId,
+                resendMaxPerHour,
+                "Too many resend verification requests. Please try again later.");
+    }
 
+    private void incrementAndAssert(String key, int max, String message) {
         Long count = redis.opsForValue().increment(key);
-
         if (count == 1) {
             redis.expire(key, Duration.ofHours(1));
         }
-
-        if (count > maxPerHour) {
-            throw new TooManyRequestsException(
-                    "Too many verification emails requested"
-            );
+        if (count > max) {
+            throw new TooManyRequestsException(message);
         }
     }
 }

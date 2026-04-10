@@ -41,7 +41,25 @@ public class EmailVerificationService {
     private final EmailVerificationRepository emailVerificationRepo;
     private final Clock clock = Clock.systemUTC();
 
+    /**
+     * Creates a new verification token and enqueues {@code EMAIL_VERIFICATION}/{@code SEND_VERIFICATION_EMAIL}
+     * on the auth outbox. {@link com.mcart.auth.task.OutboxPublisherJob} publishes to Pub/Sub for the email service.
+     */
     public void issueVerification(UUID authIdentityId, UUID userId, String email) throws JsonProcessingException {
+        enqueueVerificationEmail(authIdentityId, userId, email, false);
+    }
+
+    /**
+     * Same outbox → Pub/Sub path as signup, but uses the resend-specific rate limit bucket.
+     */
+    private void enqueueVerificationEmail(UUID authIdentityId, UUID userId, String email, boolean resendRequest)
+            throws JsonProcessingException {
+        if (resendRequest) {
+            emailVerificationRateLimiter.assertAllowedResend(authIdentityId);
+        } else {
+            emailVerificationRateLimiter.assertAllowed(authIdentityId);
+        }
+
         EmailVerificationEntity verification = EmailVerificationEntity.builder()
                 .verificationId(UUID.randomUUID())
                 .authIdentityId(authIdentityId)
@@ -49,9 +67,6 @@ public class EmailVerificationService {
                 .token(UUID.randomUUID().toString())
                 .expiresAt(Instant.now(clock).plus(tokenTtlHours, ChronoUnit.HOURS))
                 .build();
-
-        // 🔁 Rate limit hook (Redis)
-        emailVerificationRateLimiter.assertAllowed(authIdentityId);
 
         emailVerificationRepo.save(verification);
 
@@ -119,6 +134,9 @@ public class EmailVerificationService {
         emailVerificationRepo.delete(verification);
     }
 
+    /**
+     * Invalidates old tokens and enqueues a new verification email (same outbox + Pub/Sub path as signup).
+     */
     @Transactional
     public void resendVerification(String email) {
 
@@ -137,9 +155,13 @@ public class EmailVerificationService {
                     // invalidate existing tokens
                     emailVerificationRepo.deleteByAuthIdentityId(identity.getAuthIdentityId());
 
-                    // issue new token
                     try {
-                        issueVerification(identity.getAuthIdentityId(), identity.getUserId(), identity.getEmail());
+                        enqueueVerificationEmail(
+                                identity.getAuthIdentityId(),
+                                identity.getUserId(),
+                                identity.getEmail(),
+                                true
+                        );
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
