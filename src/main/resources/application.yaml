@@ -48,8 +48,10 @@ auth:
     user-signup-topic: ${AUTH_PUBSUB_USER_SIGNUP_TOPIC:user-signup-events}
     email-verification-topic: ${AUTH_PUBSUB_EMAIL_VERIFICATION_TOPIC:email-verification-events}
   verification:
-    base-url: ${AUTH_VERIFICATION_BASE_URL:}
-    # Optional full URL after successful /auth/verify-email (default: base-url + /signup)
+    # Public origin for redirects after GET /auth/verify-email (default {base-url}/signup?…). For local dev
+    # matches email service links if EMAIL_VERIFICATION_BASE_URL (or AUTH_VERIFICATION_BASE_URL) is unset.
+    base-url: ${AUTH_VERIFICATION_BASE_URL:${EMAIL_VERIFICATION_BASE_URL:http://localhost:8081}}
+    # Optional full URL after successful /auth/verify-email (overrides base-url + /signup)
     post-verify-redirect-url: ${AUTH_POST_VERIFY_REDIRECT_URL:}
     rate-limit-max: ${EMAIL_VERIFICATION_RATE_LIMIT:3}
     # POST /auth/resend-verification (separate Redis key from signup send)

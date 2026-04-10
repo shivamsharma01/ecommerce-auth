@@ -24,7 +24,7 @@ Set a JDBC URL, Redis, issuer, mail, and secrets via env or `application-local.y
 | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | PostgreSQL |
 | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Redis |
 | `AUTH_ISSUER_URI` | Issuer URL in JWT `iss` (default in yaml: `http://localhost:8081`) |
-| `AUTH_VERIFICATION_BASE_URL` | Links in verification emails |
+| `AUTH_VERIFICATION_BASE_URL` | Public site URL for post-verify redirects (`…/signup?verified=1`); align with `EMAIL_VERIFICATION_BASE_URL` on the email service |
 | `JWT_SECRET` | Symmetric secret if your config uses it (see `application.yaml`) |
 | `OAUTH2_CLIENT_SECRET`, `OAUTH2_REDIRECT_URI` | Registered OAuth2 client |
 | `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | SMTP (e.g. Gmail app password) |
