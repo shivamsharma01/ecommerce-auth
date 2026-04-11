@@ -10,6 +10,7 @@ import com.mcart.auth.repository.AuthUserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TokenServiceImpl implements TokenService {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -69,6 +71,7 @@ public class TokenServiceImpl implements TokenService {
 
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
+        log.debug("Issued token pair userId={} platformAdmin={}", userId, user.isPlatformAdmin());
         return new TokenResult(
                 accessToken,
                 jwtTokenProvider.getAccessTokenTtl()
@@ -103,6 +106,7 @@ public class TokenServiceImpl implements TokenService {
         // 3️⃣ Rotate refresh token
         refreshTokenStore.revoke(refreshTokenId);
 
+        log.debug("Refresh token rotated userId={}", tokenData.getUserId());
         return issueTokens(
                 tokenData.getAuthIdentityId(),
                 tokenData.getUserId(),

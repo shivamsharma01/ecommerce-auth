@@ -39,11 +39,19 @@ public class RedisLoginAttemptService implements LoginAttemptService {
             // first failure → set TTL
             redisTemplate.expire(key, props.getLockDuration());
         }
+        if (attempts != null && attempts >= props.getMaxAttempts()) {
+            log.warn("Login failure threshold reached authIdentityId={} failures={}",
+                    identity.getAuthIdentityId(), attempts);
+        } else if (attempts != null) {
+            log.debug("Login failure recorded authIdentityId={} consecutiveFailures={}",
+                    identity.getAuthIdentityId(), attempts);
+        }
     }
 
     @Override
     public void resetFailures(AuthIdentityEntity identity) {
         redisTemplate.delete(key(identity.getAuthIdentityId()));
+        log.debug("Login failure counter cleared authIdentityId={}", identity.getAuthIdentityId());
     }
 
     @Override
@@ -60,7 +68,7 @@ public class RedisLoginAttemptService implements LoginAttemptService {
             int attempts = Integer.parseInt(value);
             return attempts >= props.getMaxAttempts();
         } catch (NumberFormatException e) {
-            log.warn("Invalid login attempt count for key {}: {}", key, value);
+            log.warn("Invalid login attempt count in Redis for authIdentityId={}", identity.getAuthIdentityId());
             return false;
         }
     }

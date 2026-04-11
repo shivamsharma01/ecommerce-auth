@@ -14,6 +14,7 @@ import com.mcart.auth.repository.EmailVerificationRepository;
 import com.mcart.auth.repository.OutBoxEventRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailVerificationService {
 
     public static final String EMAIL_VERIFICATION = "EMAIL_VERIFICATION";
@@ -91,6 +93,8 @@ public class EmailVerificationService {
                         .lastAttemptAt(now)
                         .build()
         );
+        log.info("Verification email outbox enqueued userId={} authIdentityId={} resend={}",
+                userId, authIdentityId, resendRequest);
     }
 
     @Transactional
@@ -115,6 +119,7 @@ public class EmailVerificationService {
         if (identity.isEmailVerified()) {
             // idempotent behavior
             emailVerificationRepo.delete(verification);
+            log.debug("Email verification no-op already verified userId={}", identity.getUserId());
             return;
         }
 
@@ -132,6 +137,7 @@ public class EmailVerificationService {
 
         // delete token (single-use)
         emailVerificationRepo.delete(verification);
+        log.info("Email verified userId={} authIdentityId={}", identity.getUserId(), identity.getAuthIdentityId());
     }
 
     /**
@@ -140,6 +146,7 @@ public class EmailVerificationService {
     @Transactional
     public void resendVerification(String email) {
 
+        log.debug("Verification resend request received");
         // lookup PASSWORD identity
         authIdentityRepo
                 .findByProviderTypeAndIdentifier(

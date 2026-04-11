@@ -18,6 +18,7 @@ import com.mcart.auth.repository.AuthUserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +41,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final Clock clock = Clock.systemUTC();
@@ -113,6 +115,7 @@ public class AuthServiceImpl implements AuthService {
                 authMapper.toUserSignupPayload(request, userId)
         );
 
+        log.info("Password signup completed userId={} authIdentityId={}", userId, authIdentityId);
         return userId;
     }
 
@@ -168,6 +171,7 @@ public class AuthServiceImpl implements AuthService {
                 user.setStatus(AuthUserStatus.LOCKED);
                 user.setLockedUntil(loginAttemptService.lockedUntil(identity));
                 authUserRepo.save(user);
+                log.warn("Account locked after failed password attempts userId={}", user.getUserId());
             }
             throw new UnauthorizedException("Invalid credentials");
         }
@@ -183,6 +187,7 @@ public class AuthServiceImpl implements AuthService {
                 response
         );
 
+        log.info("Password login succeeded userId={}", identity.getUserId());
         return authMapper.toLoginResponse(tokenResult);
     }
 
@@ -229,6 +234,7 @@ public class AuthServiceImpl implements AuthService {
                 response
         );
 
+        log.info("Social login succeeded userId={} provider={}", identity.getUserId(), provider);
         return authMapper.toLoginResponse(tokenResult);
     }
 
@@ -298,6 +304,7 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Failed to publish social signup event", e);
         }
 
+        log.info("Social user provisioned userId={} provider={}", userId, request.getProviderType());
         return identity;
     }
 }

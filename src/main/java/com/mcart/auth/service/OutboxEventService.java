@@ -85,6 +85,7 @@ public class OutboxEventService {
                         .lastAttemptAt(now)
                         .build()
         );
+        log.debug("Auth outbox queued eventType={} userId={}", USER_SIGNUP_COMPLETED, userId);
     }
 
     /**
@@ -110,5 +111,6 @@ public class OutboxEventService {
                         .lastAttemptAt(now)
                         .build()
         );
+        log.debug("Auth outbox queued eventType={} userId={}", EMAIL_VERIFIED, userId);
     }
 }
