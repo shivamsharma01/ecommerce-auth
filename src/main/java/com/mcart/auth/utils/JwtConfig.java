@@ -15,31 +15,31 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
+import org.springframework.beans.factory.annotation.Value;
+
+import java.nio.file.Path;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.UUID;
 
 @Configuration
 public class JwtConfig {
 
     @Bean
-    public KeyPair rsaKeyPair() {
-        try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-            generator.initialize(2048);
-            return generator.generateKeyPair();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+    public KeyPair rsaKeyPair(@Value("${auth.jwt.rsa-private-key-path:}") String privateKeyPath) {
+        if (privateKeyPath == null || privateKeyPath.isBlank()) {
+            return RsaKeyPairFactory.generateEphemeral2048();
         }
+        return RsaKeyPairFactory.loadFromPrivateKeyPem(Path.of(privateKeyPath));
     }
 
     @Bean
-    public JWKSource<SecurityContext> jwkSource(KeyPair keyPair) {
+    public JWKSource<SecurityContext> jwkSource(
+            KeyPair keyPair,
+            @Value("${auth.jwt.key-id:mcart-auth-rsa}") String keyId) {
         RSAKey rsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
                 .privateKey((RSAPrivateKey) keyPair.getPrivate())
-                .keyID(UUID.randomUUID().toString())
+                .keyID(keyId)
                 .build();
 
         JWKSet jwkSet = new JWKSet(rsaKey);

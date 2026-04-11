@@ -42,6 +42,10 @@ management:
 
 auth:
   issuer-uri: ${AUTH_ISSUER_URI:http://localhost:8081}
+  # Multi-replica auth: set AUTH_JWT_RSA_PRIVATE_KEY_PATH to a mounted PEM (same Secret on every pod).
+  jwt:
+    rsa-private-key-path: ${AUTH_JWT_RSA_PRIVATE_KEY_PATH:}
+    key-id: ${AUTH_JWT_KEY_ID:mcart-auth-rsa}
   cookie:
     secure: ${AUTH_COOKIE_SECURE:true}
   pubsub:
