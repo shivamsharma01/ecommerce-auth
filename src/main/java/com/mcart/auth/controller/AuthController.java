@@ -23,9 +23,6 @@ public class AuthController {
     private final AuthService authService;
     private final TokenService tokenService;
 
-    // -----------------------------
-    // PASSWORD SIGNUP
-    // -----------------------------
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(
             @RequestBody @Valid PasswordSignupRequest request) throws JsonProcessingException {
@@ -37,9 +34,6 @@ public class AuthController {
         );
     }
 
-    // -----------------------------
-    // PASSWORD LOGIN
-    // -----------------------------
     @Transactional
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
@@ -48,9 +42,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // -----------------------------
-    // SOCIAL LOGIN
-    // -----------------------------
     @PostMapping("/social/login")
     public ResponseEntity<LoginResponse> socialLogin(
             @RequestBody @Valid SocialLoginRequest request, HttpServletResponse servletResponse) {
@@ -58,9 +49,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // -----------------------------
-    // TOKEN REFRESH
-    // -----------------------------
     @PostMapping("/refresh")
     public LoginResponse refresh(
             @CookieValue(name = ConfigConstants.Cookie.REFRESH_TOKEN_NAME, required = false)

@@ -24,10 +24,6 @@ public class EmailVerificationController {
     @Value("${auth.verification.base-url}")
     private String verificationBaseUrl;
 
-    /**
-     * Full URL to send users after successful verification (e.g. https://mcart.space/signup?...).
-     * If empty, {@code auth.verification.base-url + "/signup"} is used.
-     */
     @Value("${auth.verification.post-verify-redirect-url:}")
     private String postVerifyRedirectUrl;
 

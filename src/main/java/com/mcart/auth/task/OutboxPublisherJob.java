@@ -73,12 +73,6 @@ public class OutboxPublisherJob {
         }
     }
 
-    /**
-     * Publishes USER_SIGNUP events to Pub/Sub for downstream services (e.g. User Service).
-     * Handles USER_SIGNUP_COMPLETED (profile data) and EMAIL_VERIFIED (verified=true).
-     *
-     * @return true if published, false if skipped (Pub/Sub not configured)
-     */
     private boolean processUserSignupEvent(OutboxEventEntity event) throws Exception {
         if (pubSubTemplate == null) {
             log.debug("PubSubTemplate not available, skipping USER_SIGNUP event (stays PENDING)");
@@ -123,11 +117,6 @@ public class OutboxPublisherJob {
         return true;
     }
 
-    /**
-     * Publishes verification-email requests to Pub/Sub for the email microservice.
-     *
-     * @return true if published, false if skipped (Pub/Sub not configured)
-     */
     private boolean publishVerificationEmailEvent(OutboxEventEntity event) throws Exception {
         if (pubSubTemplate == null) {
             log.debug("PubSubTemplate not available, skipping EMAIL_VERIFICATION event (stays PENDING)");
