@@ -17,11 +17,6 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Service responsible for persisting outbox events for pub/sub notifications.
- * Events are picked up by {@link com.mcart.auth.task.OutboxPublisherJob} and published
- * to topics consumed by downstream services (e.g. User Service).
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -40,30 +35,12 @@ public class OutboxEventService {
     private final ObjectMapper objectMapper;
     private final Clock clock = Clock.systemUTC();
 
-    /**
-     * Persists a USER_SIGNUP_COMPLETED event for password signup.
-     * Downstream services use this to create user profiles.
-     *
-     * @param authIdentityId the auth identity ID (aggregate)
-     * @param userId         the user ID
-     * @param payload        the signup payload (email, firstName, lastName)
-     * @throws JsonProcessingException if payload serialization fails
-     */
     public void publishUserSignupEvent(UUID authIdentityId, UUID userId, UserSignupEventPayload payload)
             throws JsonProcessingException {
         String payloadJson = objectMapper.writeValueAsString(payload);
         saveOutboxEvent(authIdentityId, userId, payloadJson);
     }
 
-    /**
-     * Persists a USER_SIGNUP_COMPLETED event for social signup.
-     * Downstream services use this to create user profiles for social logins.
-     *
-     * @param authIdentityId the auth identity ID (aggregate)
-     * @param userId         the user ID
-     * @param payload        the social signup payload
-     * @throws JsonProcessingException if payload serialization fails
-     */
     public void publishSocialSignupEvent(UUID authIdentityId, UUID userId, SocialSignupEventPayload payload)
             throws JsonProcessingException {
         String payloadJson = objectMapper.writeValueAsString(payload);
@@ -88,13 +65,6 @@ public class OutboxEventService {
         log.debug("Auth outbox queued eventType={} userId={}", USER_SIGNUP_COMPLETED, userId);
     }
 
-    /**
-     * Persists an EMAIL_VERIFIED event after successful /verify-email.
-     * User service uses this to set verified=true so /me and /profile return profile details.
-     *
-     * @param authIdentityId the auth identity ID
-     * @param userId         the user ID
-     */
     public void publishEmailVerifiedEvent(UUID authIdentityId, UUID userId) throws JsonProcessingException {
         String payloadJson = objectMapper.writeValueAsString(Map.of("userId", userId.toString()));
         Instant now = Instant.now(clock);

@@ -43,17 +43,10 @@ public class EmailVerificationService {
     private final EmailVerificationRepository emailVerificationRepo;
     private final Clock clock = Clock.systemUTC();
 
-    /**
-     * Creates a new verification token and enqueues {@code EMAIL_VERIFICATION}/{@code SEND_VERIFICATION_EMAIL}
-     * on the auth outbox. {@link com.mcart.auth.task.OutboxPublisherJob} publishes to Pub/Sub for the email service.
-     */
     public void issueVerification(UUID authIdentityId, UUID userId, String email) throws JsonProcessingException {
         enqueueVerificationEmail(authIdentityId, userId, email, false);
     }
 
-    /**
-     * Same outbox → Pub/Sub path as signup, but uses the resend-specific rate limit bucket.
-     */
     private void enqueueVerificationEmail(UUID authIdentityId, UUID userId, String email, boolean resendRequest)
             throws JsonProcessingException {
         if (resendRequest) {
@@ -140,9 +133,6 @@ public class EmailVerificationService {
         log.info("Email verified userId={} authIdentityId={}", identity.getUserId(), identity.getAuthIdentityId());
     }
 
-    /**
-     * Invalidates old tokens and enqueues a new verification email (same outbox + Pub/Sub path as signup).
-     */
     @Transactional
     public void resendVerification(String email) {
 
